@@ -46,25 +46,25 @@ mutex.wait()
         helpElves()
 mutex.signal()      
 */
-sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
-pthread_mutex_lock( &mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
+	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
+	pthread_mutex_lock( &mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
     if(reindeer >= 9){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
         prepareSleigh(); // Se as renas forem == 9, o trenó é preparado
         //reindeerSem.signal(9)
         int i;
         for (i=0; i<9; i++){
-        sem_wait(&reindeerSem);
+        sem_post(&reindeerSem);
         }
         reindeer -=9;
         printf("if Elves = %d, Reindeer = %d \n", elves, reindeer);
     }else if (elves == 3){
-        int i;
+        /*int i;
         for (i=0; i<3; i++){
         sem_wait(&elfSem);
-        }
+        }*/
         helpElves();
     }
-pthread_mutex_unlock( &mutex);
+	pthread_mutex_unlock( &mutex);
 
 }
 //Funcao Reindeer
@@ -82,15 +82,16 @@ reindeerSem.wait() \\ Faz com que as renas esperem o papai noel preparar o tren�
 getHitched() \\ Executa o a função de ser alocada ao trenó
 */
 
-pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&mutex);
     reindeer += 1;
     if(reindeer == 9){
         //santaSem.signal()
+        sem_post(&santaSem);
     }
-pthread_mutex_unlock( &mutex);
+	pthread_mutex_unlock( &mutex);
 
-sem_wait(&reindeerSem);
-getHitched();
+	sem_wait(&reindeerSem);
+	getHitched();
 }
 
 
@@ -124,11 +125,11 @@ pthread_mutex_lock( &mutex);
     }else{
         pthread_mutex_unlock( &elfTex);
     }
-pthread_mutex_unlock( &mutex);
+	pthread_mutex_unlock( &mutex);
 
-getHelp();
+	getHelp();
 
-pthread_mutex_lock( &mutex);
+	pthread_mutex_lock( &mutex);
     elves -= 1;
     if(elves == 0){
         pthread_mutex_unlock(&elfTex);
@@ -195,7 +196,7 @@ pthread_create(&thr_elf, NULL, Elves, NULL);
 
 
 //loop do papai noel
-while(elves != 0 && reindeer != 0){
+//while(elves != 0 && reindeer != 0){
     //iniciando as threads
     
     //printf("inicial Elves = %d, Reindeer = %d \n", elves, reindeer);
@@ -203,7 +204,7 @@ while(elves != 0 && reindeer != 0){
     pthread_join(thr_reindeer, NULL);
     pthread_join(thr_elf, NULL);
     
-}
+//}
 
 }
 
