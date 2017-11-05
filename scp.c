@@ -34,7 +34,7 @@ void getHelp(){
 
 //Funcao Santa
 void *Santa(){
-	//while(1){//elves != 0 && reindeer != 0){
+	while(1){//elves != 0 && reindeer != 0){
 		printf("Thread Santa: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 
 	/*
@@ -70,7 +70,7 @@ void *Santa(){
 	    }
 		pthread_mutex_unlock( &mutex);
 		printf("saiu Thread Santa\n");
-//	}
+	}
 
 }
 //Funcao Reindeer
@@ -202,6 +202,7 @@ pthread_t thr_claus, thr_reindeer, thr_elf;
 	pthread_mutex_init(&mutex, NULL);
 	pthread_mutex_init(&elfTex, NULL);
 	pthread_mutex_init(&santaSem, NULL);
+	pthread_mutex_lock(&santaSem);
 
 //criando as threads
 
@@ -211,7 +212,7 @@ pthread_create(&thr_elf, NULL, &Elves, NULL);
 
 
 //loop do papai noel
-while(1){
+//while(1){
     //iniciando as threads
     
     //printf("inicial Elves = %d, Reindeer = %d \n", elves, reindeer);
@@ -219,7 +220,7 @@ while(1){
     pthread_join(thr_reindeer, NULL);
     pthread_join(thr_elf, NULL);
     
-}
+//}
 
 }
 
