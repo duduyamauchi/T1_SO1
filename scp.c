@@ -8,7 +8,7 @@
 int N_Reindeer, N_Elves;
 int elves = 0, reindeer = 0; //argReindeer;
 //Declarando semaforos
-sem_t reindeerSem, santaSem;
+sem_t reindeerSem, santaSem, elfSem;
 //Declarando Mutex
 pthread_mutex_t mutex, elfTex;
 
@@ -52,10 +52,17 @@ void *Santa(){
 	        }
 	        reindeer = 0;
 	        
-		printf("-----RENAS FINALIZADAS----- \n");
+		printf("\n \n -----RENAS FINALIZADAS----- \n\n");
 		
 	}else if (elves == 3){
+		
+		int j;
+	        for (j=0; j<=3; j++){
+	        	sem_post(&elfSem);
+	        }
+		
 		helpElves();
+		printf("\n \n -----3 ELFOS FINALIZADAS----- \n\n");
 	}
 		
 	pthread_mutex_unlock(&mutex);//Desbloqueando mutex
@@ -88,7 +95,7 @@ void *Reindeer(){
 	
 }
 
-//Funcao Elves
+/*//Funcao Elves
 void *Elves(){
 	printf("=====ENTROU Thread Elves===== \n\n");
 	
@@ -96,6 +103,7 @@ void *Elves(){
 	pthread_mutex_lock(&mutex);
 	
 	elves++;
+
 	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS ADICIONAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if (elves == 3){
 		printf("Já há 3 elfos\n");		
@@ -110,7 +118,43 @@ void *Elves(){
 	getHelp();
 	
 	pthread_mutex_lock(&mutex);
+	
 	elves--;
+
+	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS RETIRAR: %d xxxxxxxxxxxxxxx\n",elves);
+	if(elves == 0){
+		pthread_mutex_unlock(&elfTex);
+	}
+
+	pthread_mutex_unlock(&mutex);
+}*/
+
+//Funcao Elves
+void *Elves(){
+	printf("=====ENTROU Thread Elves===== \n\n");
+	
+	pthread_mutex_lock(&elfTex);
+	pthread_mutex_lock(&mutex);
+	
+	elves++;
+
+	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS ADICIONAR: %d xxxxxxxxxxxxxxx\n",elves);
+	if (elves == 3){
+		printf("Já há 3 elfos\n");		
+		sem_post(&santaSem);		
+	}else{
+		printf("Ainda não há 3 elfos\n");		
+		pthread_mutex_unlock( &elfTex);		
+	}
+
+	pthread_mutex_unlock(&mutex);
+	sem_wait(&elfSem);
+	getHelp();
+	
+	pthread_mutex_lock(&mutex);
+	
+	elves--;
+
 	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS RETIRAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if(elves == 0){
 		pthread_mutex_unlock(&elfTex);
@@ -129,6 +173,7 @@ int main(){
 	
 	//inicializando semaforos e mutex
 	sem_init(&reindeerSem, 0, 0);
+	sem_init(&elfSem, 0, 0);
 	sem_init(&santaSem,0,0);	
 
 	pthread_mutex_init(&mutex,NULL);
