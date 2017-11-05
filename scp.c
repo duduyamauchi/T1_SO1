@@ -14,19 +14,19 @@ pthread_mutex_t mutex, elfTex;
 
 
 void prepareSleigh(){
-    printf("\n Santa is preparing the sleigh... \n");
+    printf("\nSanta is preparing the sleigh... \n");
     return;
 }
 void helpElves(){
-    printf("\n Santa is helping the elves... \n");
+    printf("\nSanta is helping the elves... \n");
     return;
 }
 void getHitched(){
-    printf("\n Santa is hitching the reindeers... \n");
+    printf("\nSanta is hitching the reindeers... \n");
     return;
 }
 void getHelp(){
-    printf("\n The elf is asking Santa for help... \n");
+    printf("\nThe elf is asking Santa for help... \n");
     return;
 }
 
@@ -49,10 +49,11 @@ void *Santa(){
 	        int i;
 	        for (i=0; i<=9; i++){
 	        	sem_post(&reindeerSem);
-			printf("reindeer n: %d preparada\n",i);
 	        }
 	        reindeer = 0;
-	        printf("-----Finalizando renas----- \n");
+	        
+		printf("-----RENAS FINALIZADAS----- \n");
+		
 	}else if (elves == 3){
 		helpElves();
 	}
@@ -84,21 +85,18 @@ void *Reindeer(){
 
 	getHitched();
 	
-	printf("=====SAIU Thread Reindeer===== \n\n");
+	
 }
 
 //Funcao Elves
 void *Elves(){
 	printf("=====ENTROU Thread Elves===== \n\n");
 	
-	printf("elfTex bloqueado em Elves\n");
 	pthread_mutex_lock(&elfTex);
-	
-	printf("mutex bloqueado em Elves\n");
 	pthread_mutex_lock(&mutex);
 	
 	elves++;
-	printf("xxxxxxxxxxx NUMEROS DE ELFOS: %d xxxxxxxxxxxxxxx\n",elves);
+	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS ADICIONAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if (elves == 3){
 		printf("Já há 3 elfos\n");		
 		sem_post(&santaSem);		
@@ -108,20 +106,17 @@ void *Elves(){
 	}
 
 	pthread_mutex_unlock(&mutex);
-	printf("Mutex desbloqueado em Elves\n");
+	
 	getHelp();
 	
-	printf("Mutex bloqueado em Elves\n");
 	pthread_mutex_lock(&mutex);
 	elves--;
+	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS RETIRAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if(elves == 0){
 		pthread_mutex_unlock(&elfTex);
-		printf("elfTex desbloqueado em elves\n");
 	}
-	pthread_mutex_unlock(&mutex);
-	printf("Mutex desbloqueado em Elves\n");
 
-	printf("=====SAIU Thread Elves: Elves===== \n\n");
+	pthread_mutex_unlock(&mutex);
 }
 
 int main(){
