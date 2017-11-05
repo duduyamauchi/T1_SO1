@@ -5,29 +5,28 @@
 #include <semaphore.h>
 
 //Declarando variaveis necessarias
-int elves, reindeer; //argReindeer;
+int N_Reindeer, N_Elves;
+int elves = 0, reindeer = 0; //argReindeer;
 //Declarando semaforos
 sem_t reindeerSem, santaSem;
 //Declarando Mutex
 pthread_mutex_t mutex, elfTex;
-//declarando threads
-pthread_t thr_claus, thr_reindeer, thr_elf;
 
 
 void prepareSleigh(){
-    printf("Santa is preparing the sleigh... \n");
+    printf("\n Santa is preparing the sleigh... \n");
     return;
 }
 void helpElves(){
-    printf("Santa is helping the elves... \n");
+    printf("\n Santa is helping the elves... \n");
     return;
 }
 void getHitched(){
-    printf("Santa is hitching the reindeers... \n");
+    printf("\n Santa is hitching the reindeers... \n");
     return;
 }
 void getHelp(){
-    printf("The elf is asking Santa for help... \n");
+    printf("\n The elf is asking Santa for help... \n");
     return;
 }
 
@@ -35,25 +34,25 @@ void getHelp(){
 //Funcao Santa
 void *Santa(){
 	
-	printf("ENTROU Thread Santa: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("\n =====ENTROU Thread Santa=====\n\n");
 
-	printf("Santa wait\n");
+	printf("Santa dormindo\n");
 	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
-	printf("Santa go\n");
+	printf("Santa acordou\n");
 
 	printf("Mutex bloqueado em Santa\n");	
 	pthread_mutex_lock(&mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
 	
 
-	if(reindeer >= 9){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
+	if(reindeer == 9){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
 	        prepareSleigh(); // Se as renas forem == 9, o trenó é preparado
 	        int i;
-	        for (i=0; i<9; i++){
+	        for (i=0; i<=9; i++){
 	        	sem_post(&reindeerSem);
-			printf("reindeer n: %d preparada",i);
+			printf("reindeer n: %d preparada\n",i);
 	        }
-	        reindeer -=9;
-	        printf("if Elves = %d, Reindeer = %d \n", elves, reindeer);
+	        reindeer = 0;
+	        printf("-----Finalizando renas----- \n");
 	}else if (elves == 3){
 		helpElves();
 	}
@@ -61,38 +60,36 @@ void *Santa(){
 	pthread_mutex_unlock(&mutex);//Desbloqueando mutex
 	printf("Mutex desbloqueado em Santa\n");
 
-	printf("SAIU Thread Santa: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("\n =====SAIU Thread Santa===== \n\n");
 
 }
 //Funcao Reindeer
 void *Reindeer(){
 
-	printf("ENTROU Thread Reindeer: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("\n=====ENTROU Thread Reindeer===== \n\n");
 	
-	printf("Mutex bloqueado em Reindeer\n");
 	pthread_mutex_lock(&mutex);//Bloqueando essa parte do codigo com mutex
 	
-	reindeer += 1;
+	reindeer++;
+	printf("xxxxxxxxxxx NUMEROS DE RENAS: %d xxxxxxxxxxxxxxx\n",reindeer);
 	if(reindeer == 9){
-		//santaSem.signal()
+		printf("Já há 9 reindeers\n");
 		sem_post(&santaSem);
-		printf("Reindeer acordando papai noel");
+		printf("Reindeer acordando papai noel\n");
 	}
 	
 	pthread_mutex_unlock( &mutex);//Desbloqueando o mutex
-	printf("Mutex desbloqueado em Reindeer\n");
-	
-	printf("Reindeer esta esperando Santa\n");	
+		
 	sem_wait(&reindeerSem);
-	printf("Reindeer acabou de esperar Santa\n");
+
 	getHitched();
 	
-	printf("SAIU Thread Reindeer: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("=====SAIU Thread Reindeer===== \n\n");
 }
 
 //Funcao Elves
 void *Elves(){
-	printf("ENTROU Thread Elves: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("=====ENTROU Thread Elves===== \n\n");
 	
 	printf("elfTex bloqueado em Elves\n");
 	pthread_mutex_lock(&elfTex);
@@ -100,35 +97,41 @@ void *Elves(){
 	printf("mutex bloqueado em Elves\n");
 	pthread_mutex_lock(&mutex);
 	
-	elves += 1;
+	elves++;
+	printf("xxxxxxxxxxx NUMEROS DE ELFOS: %d xxxxxxxxxxxxxxx\n",elves);
 	if (elves == 3){
-		sem_post(&santaSem);
+		printf("Já há 3 elfos\n");		
+		sem_post(&santaSem);		
 	}else{
-		pthread_mutex_unlock( &elfTex);
+		printf("Ainda não há 3 elfos\n");		
+		pthread_mutex_unlock( &elfTex);		
 	}
 
 	pthread_mutex_unlock(&mutex);
-	
+	printf("Mutex desbloqueado em Elves\n");
 	getHelp();
-
+	
+	printf("Mutex bloqueado em Elves\n");
 	pthread_mutex_lock(&mutex);
-	elves -= 1;
+	elves--;
 	if(elves == 0){
 		pthread_mutex_unlock(&elfTex);
 		printf("elfTex desbloqueado em elves\n");
 	}
 	pthread_mutex_unlock(&mutex);
-	printf("Mutex desbloqueado em Elvis\n");
+	printf("Mutex desbloqueado em Elves\n");
 
-	printf("SAIU Thread Elves: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("=====SAIU Thread Elves: Elves===== \n\n");
 }
 
 int main(){
 
 	printf("elves and reindeers: \n");
-	scanf("%d %d", &elves, &reindeer);
+	scanf("%d %d", &N_Elves, &N_Reindeer);
 
-
+	//declarando threads
+	pthread_t thr_claus, thr_reindeer[N_Reindeer], thr_elf[N_Elves];
+	
 	//inicializando semaforos e mutex
 	sem_init(&reindeerSem, 0, 0);
 	sem_init(&santaSem,0,0);	
@@ -139,20 +142,17 @@ int main(){
 	//criando as threads
 
 	pthread_create(&thr_claus, NULL, &Santa, NULL);
-	pthread_create(&thr_reindeer, NULL, &Reindeer, NULL);
-	pthread_create(&thr_elf, NULL, &Elves, NULL);
 
+	for(int i=0; i < N_Reindeer;i++){
+		pthread_create(&thr_reindeer[i], NULL, &Reindeer, NULL);
+	}	
 	
-	//loop do papai noel
-	while(1){
-    	//iniciando as threads
-		pthread_join(thr_claus, NULL);
-		while((reindeer != 9) || (elves != 3)){
-			pthread_join(thr_reindeer, NULL);
-			pthread_join(thr_elf, NULL);	
-		}
-		
+	for(int j=0; j < N_Elves; j++){
+		pthread_create(&thr_elf[j], NULL, &Elves, NULL);
 	}
-
+	
+	
+	pthread_join(thr_claus, NULL);
+	
 }
 
