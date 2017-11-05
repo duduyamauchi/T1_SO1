@@ -41,14 +41,16 @@ void *Santa(){
 	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
 	printf("Santa go\n");
 
+	printf("Mutex bloqueado em Santa\n");	
 	pthread_mutex_lock(&mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
+	
 
 	if(reindeer >= 9){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
 	        prepareSleigh(); // Se as renas forem == 9, o trenó é preparado
-	        //reindeerSem.signal(9)
 	        int i;
 	        for (i=0; i<9; i++){
 	        	sem_post(&reindeerSem);
+			printf("reindeer n: %d preparada",i);
 	        }
 	        reindeer -=9;
 	        printf("if Elves = %d, Reindeer = %d \n", elves, reindeer);
@@ -57,6 +59,7 @@ void *Santa(){
 	}
 		
 	pthread_mutex_unlock(&mutex);//Desbloqueando mutex
+	printf("Mutex desbloqueado em Santa\n");
 
 	printf("SAIU Thread Santa: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 
@@ -65,15 +68,23 @@ void *Santa(){
 void *Reindeer(){
 
 	printf("ENTROU Thread Reindeer: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
-
+	
+	printf("Mutex bloqueado em Reindeer\n");
 	pthread_mutex_lock(&mutex);//Bloqueando essa parte do codigo com mutex
+	
 	reindeer += 1;
 	if(reindeer == 9){
 		//santaSem.signal()
 		sem_post(&santaSem);
+		printf("Reindeer acordando papai noel");
 	}
+	
 	pthread_mutex_unlock( &mutex);//Desbloqueando o mutex
+	printf("Mutex desbloqueado em Reindeer\n");
+	
+	printf("Reindeer esta esperando Santa\n");	
 	sem_wait(&reindeerSem);
+	printf("Reindeer acabou de esperar Santa\n");
 	getHitched();
 	
 	printf("SAIU Thread Reindeer: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
@@ -83,8 +94,12 @@ void *Reindeer(){
 void *Elves(){
 	printf("ENTROU Thread Elves: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 	
+	printf("elfTex bloqueado em Elves\n");
 	pthread_mutex_lock(&elfTex);
+	
+	printf("mutex bloqueado em Elves\n");
 	pthread_mutex_lock(&mutex);
+	
 	elves += 1;
 	if (elves == 3){
 		sem_post(&santaSem);
@@ -100,8 +115,10 @@ void *Elves(){
 	elves -= 1;
 	if(elves == 0){
 		pthread_mutex_unlock(&elfTex);
+		printf("elfTex desbloqueado em elves\n");
 	}
 	pthread_mutex_unlock(&mutex);
+	printf("Mutex desbloqueado em Elvis\n");
 
 	printf("SAIU Thread Elves: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 }
@@ -129,11 +146,12 @@ int main(){
 	//loop do papai noel
 	while(1){
     	//iniciando as threads
-    
-    	//printf("inicial Elves = %d, Reindeer = %d \n", elves, reindeer);
 		pthread_join(thr_claus, NULL);
-		pthread_join(thr_reindeer, NULL);
-		pthread_join(thr_elf, NULL);
+		while((reindeer != 9) || (elves != 3)){
+			pthread_join(thr_reindeer, NULL);
+			pthread_join(thr_elf, NULL);	
+		}
+		
 	}
 
 }
