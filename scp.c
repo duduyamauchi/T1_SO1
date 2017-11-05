@@ -35,7 +35,7 @@ void getHelp(){
 //Funcao Santa
 void *Santa(){
 	while(1){//elves != 0 && reindeer != 0){
-		printf("Thread Santa: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+		printf("ENTROU Thread Santa: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 
 	/*
 	santaSem.wait() 
@@ -69,13 +69,13 @@ void *Santa(){
 	        helpElves();
 	    }
 		pthread_mutex_unlock( &mutex);
-		printf("saiu Thread Santa\n");
+		printf("SAIU Thread Santa: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 	}
 
 }
 //Funcao Reindeer
 void *Reindeer(){
-	printf("Thread Reindeer: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("ENTROU Thread Reindeer: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 
 /*    
 mutex.wait \\ Espera acesso exclusivo ao contador
@@ -98,13 +98,13 @@ getHitched() \\ Executa o a função de ser alocada ao trenó
 
 	sem_wait(&reindeerSem);
 	getHitched();
-	printf("saiu Thread Reindeer\n");
+	printf("SAIU Thread Reindeer: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 }
 
 
 //Funcao Elves
 void *Elves(){
-	printf("Thread Elves: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
+	printf("ENTROU Thread Elves: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
     /*
     elfTex.wait()
     mutex.wait()
@@ -143,7 +143,7 @@ void *Elves(){
         pthread_mutex_unlock(&elfTex);
     }
     pthread_mutex_unlock( &mutex);
-    printf("saiu Thread Elves\n");
+    printf("SAIU Thread Elves: Elves = %d, Reindeer = %d \n\n", elves, reindeer);
 
 }
 
