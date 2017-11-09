@@ -3,14 +3,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include <time.h>
+
+#define REINDEERS 9
 
 //Declarando variaveis necessarias
-int N_Reindeer, N_Elves;
+int N_Elves;
 int elves = 0, reindeer = 0; //argReindeer;
 //Declarando semaforos
 sem_t reindeerSem, santaSem, elfSem;
 //Declarando Mutex
-pthread_mutex_t mutex, elfTex;
+sem_t mutex,elfAux;
 
 
 void prepareSleigh(){
@@ -33,166 +36,217 @@ void getHelp(){
 
 //Funcao Santa
 void *Santa(){
-	
-	printf("\n =====ENTROU Thread Santa=====\n\n");
+    /* code */
 
-	printf("Santa dormindo\n");
-	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
-	printf("Santa acordou\n");
+  	printf("\n =====ENTROU Thread Santa=====\n\n");
 
-	printf("Mutex bloqueado em Santa\n");	
-	pthread_mutex_lock(&mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
-	
+  	printf("Santa dormindo\n");
+  	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
+  	printf("Santa acordou\n");
 
-	if(reindeer == 9){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
-	        prepareSleigh(); // Se as renas forem == 9, o trenó é preparado
-	        int i;
-	        for (i=0; i<=9; i++){
-	        	sem_post(&reindeerSem);
-	        }
-	        reindeer = 0;
-	        
-		printf("\n \n -----RENAS FINALIZADAS----- \n\n");
-		
-	}else if (elves == 3){
-		
-		int j;
-	        for (j=0; j<=3; j++){
-	        	sem_post(&elfSem);
-	        }
-		
-		helpElves();
-		printf("\n \n -----3 ELFOS FINALIZADAS----- \n\n");
-	}
-		
-	pthread_mutex_unlock(&mutex);//Desbloqueando mutex
-	printf("Mutex desbloqueado em Santa\n");
+  	printf("Mutex bloqueado em Santa\n");
+  	sem_wait(&mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
 
-	printf("\n =====SAIU Thread Santa===== \n\n");
+    while (elves > 0) {
+    	if(reindeer == REINDEERS){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
+    	        prepareSleigh(); // Se as renas forem == 9, o trenó é preparado
+    	        int i;
+    	        for (i=0; i<REINDEERS; i++){
+    	        	sem_post(&reindeerSem);
+    	        }
+    	        reindeer = 0;
+              printf("\n \n -----RENAS FINALIZADAS----- \n\n");
+              sem_post(&mutex);
+
+
+    	}
+      if (elves == 3){
+  /*
+    		int j;
+    	        for (j=0; j<3; j++){
+    	        	sem_post(&elfSem);
+    	        }
+  */
+    		helpElves();
+    		printf("\n \n -----3 ELFOS FINALIZADAS----- \n\n");
+        sem_post(&elfAux);
+        sem_post(&mutex);
+    	}
+    }
+
+    printf("elvessss: %d\n",elves );
+  	//Desbloqueando mutex
+  	printf("Mutex desbloqueado em Santa\n");
+  	printf("\n =====SAIU Thread Santa===== \n\n");
+    pthread_exit(0);
 
 }
 //Funcao Reindeer
 void *Reindeer(){
 
 	printf("\n=====ENTROU Thread Reindeer===== \n\n");
-	
-	pthread_mutex_lock(&mutex);//Bloqueando essa parte do codigo com mutex
-	
+
+	sem_wait(&mutex);//Bloqueando essa parte do codigo com mutex
+
+
 	reindeer++;
 	printf("xxxxxxxxxxx NUMEROS DE RENAS: %d xxxxxxxxxxxxxxx\n",reindeer);
-	if(reindeer == 9){
-		printf("Já há 9 reindeers\n");
+	if(reindeer == REINDEERS){
+		printf("Já há REINDEERS reindeers\n");
 		sem_post(&santaSem);
 		printf("Reindeer acordando papai noel\n");
 	}
-	
-	pthread_mutex_unlock( &mutex);//Desbloqueando o mutex
-		
-	sem_wait(&reindeerSem);
 
+	//Desbloqueando o mutex
+  sem_post(&mutex);
+	sem_wait(&reindeerSem);
 	getHitched();
-	
-	
+  pthread_exit(0);
+
+
+
 }
 
 /*//Funcao Elves
 void *Elves(){
 	printf("=====ENTROU Thread Elves===== \n\n");
-	
-	pthread_mutex_lock(&elfTex);
-	pthread_mutex_lock(&mutex);
-	
+
+	sem_wait(&elfTex);
+	sem_wait(&mutex);
+
 	elves++;
 
 	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS ADICIONAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if (elves == 3){
-		printf("Já há 3 elfos\n");		
-		sem_post(&santaSem);		
+		printf("Já há 3 elfos\n");
+		sem_post(&santaSem);
 	}else{
-		printf("Ainda não há 3 elfos\n");		
-		pthread_mutex_unlock( &elfTex);		
+		printf("Ainda não há 3 elfos\n");
+		sem_post( &elfTex);
 	}
 
-	pthread_mutex_unlock(&mutex);
-	
+	sem_post(&mutex);
+
 	getHelp();
-	
-	pthread_mutex_lock(&mutex);
-	
+
+	sem_wait(&mutex);
+
 	elves--;
 
 	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS RETIRAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if(elves == 0){
-		pthread_mutex_unlock(&elfTex);
+		sem_post(&elfTex);
 	}
 
-	pthread_mutex_unlock(&mutex);
+	sem_post(&mutex);
 }*/
 
 //Funcao Elves
 void *Elves(){
 	printf("=====ENTROU Thread Elves===== \n\n");
-	
-	pthread_mutex_lock(&elfTex);
-	pthread_mutex_lock(&mutex);
-	
+	sem_wait(&elfSem);
+	sem_wait(&mutex);
+
 	elves++;
 
 	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS ADICIONAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if (elves == 3){
-		printf("Já há 3 elfos\n");		
-		sem_post(&santaSem);		
+		printf("Já há 3 elfos\n");
+		sem_post(&santaSem);
 	}else{
-		printf("Ainda não há 3 elfos\n");		
-		pthread_mutex_unlock( &elfTex);		
+		printf("Ainda não há 3 elfos\n");
+		sem_post( &elfSem);
 	}
 
-	pthread_mutex_unlock(&mutex);
-	sem_wait(&elfSem);
+	sem_post(&mutex);
 	getHelp();
-	
-	pthread_mutex_lock(&mutex);
-	
+  sem_wait(&elfAux);
+	sem_wait(&mutex);
+
 	elves--;
 
 	printf("xxxxxxxxxxx NUMEROS DE ELFOS APOS RETIRAR: %d xxxxxxxxxxxxxxx\n",elves);
 	if(elves == 0){
-		pthread_mutex_unlock(&elfTex);
+		sem_post(&elfSem);
 	}
 
-	pthread_mutex_unlock(&mutex);
+	sem_post(&mutex);
+  pthread_exit(0);
 }
 
 int main(){
 
-	printf("elves and reindeers: \n");
-	scanf("%d %d", &N_Elves, &N_Reindeer);
+	printf("elves: \n");
+	scanf("%d", &N_Elves);
 
 	//declarando threads
-	pthread_t thr_claus, thr_reindeer[N_Reindeer], thr_elf[N_Elves];
-	
+	pthread_t thr_claus, thr_reindeer, thr_elf;
+
 	//inicializando semaforos e mutex
 	sem_init(&reindeerSem, 0, 0);
-	sem_init(&elfSem, 0, 0);
-	sem_init(&santaSem,0,0);	
+	sem_init(&elfSem, 0, 1);
+	sem_init(&santaSem,0,0);
+  sem_init(&mutex,0,1);
+  sem_init(&elfAux,0,0);
 
-	pthread_mutex_init(&mutex,NULL);
-	pthread_mutex_init(&elfTex,NULL);
+
 
 	//criando as threads
 
 	pthread_create(&thr_claus, NULL, &Santa, NULL);
+  //pthread_create(&thr_reindeer, NULL, &Reindeer, NULL);
+//  pthread_create(&thr_elf, NULL, &Elves, NULL);
 
+
+  srand(time(NULL));
+  int aux_random = REINDEERS + N_Elves;
+
+  int elves_cont = N_Elves;
+  int rein_cont = REINDEERS;
+  printf("rein_cont: %d\n",rein_cont);
+  printf("elves_cont: %d\n",elves_cont);
+
+  for(int i=0; i < aux_random;i++){
+
+  //do{
+    int r = rand()%2;
+    printf("i = %d, rein_cont = %d, elves_cont = %d, r = %d\n",i, rein_cont, elves_cont,r);
+    if (r == 0){
+        if (elves_cont > 0){
+          elves_cont--;
+        printf("elves_cont de dentro: %d\n",elves_cont);
+        pthread_create(&thr_elf, NULL, &Elves, NULL);
+      } else {
+        rein_cont--;
+        printf("rein_cont de dentro: %d\n",rein_cont);
+        pthread_create(&thr_reindeer, NULL, &Reindeer, NULL);
+      }
+	  }else{
+      if (rein_cont > 0){
+        rein_cont--;
+        printf("rein_cont de dentro: %d\n",rein_cont);
+        pthread_create(&thr_reindeer, NULL, &Reindeer, NULL);
+      } else {
+        elves_cont--;
+      printf("elves_cont de dentro: %d\n",elves_cont);
+      pthread_create(&thr_elf, NULL, &Elves, NULL);
+      }
+    }
+
+  } //while (elves != 0);
+
+/*
 	for(int i=0; i < N_Reindeer;i++){
 		pthread_create(&thr_reindeer[i], NULL, &Reindeer, NULL);
-	}	
-	
+	}
+
 	for(int j=0; j < N_Elves; j++){
 		pthread_create(&thr_elf[j], NULL, &Elves, NULL);
 	}
-	
-	
-	pthread_join(thr_claus, NULL);
-	
-}
+  */
 
+
+	pthread_join(thr_claus, NULL);
+
+
+}

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gcc -pthread scp.c -o scp
