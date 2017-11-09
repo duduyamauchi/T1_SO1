@@ -15,6 +15,8 @@ int elves = 0, reindeer = 0; //argReindeer;
 sem_t reindeerSem, santaSem, elfSem;
 //Declarando Mutex
 sem_t mutex,elfAux;
+int cont_mutex = 1;
+int aux_elves;
 
 
 void prepareSleigh(){
@@ -45,7 +47,7 @@ void *Santa(){
   	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
   	printf("Santa acordou\n");
 
-  	printf("Mutex bloqueado em Santa\n");
+  	printf("Mutex bloqueado em Santa %d\n",--cont_mutex);
   	sem_wait(&mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
 
 
@@ -60,7 +62,7 @@ void *Santa(){
     	        }
 
               printf("\n \n -----RENAS FINALIZADAS----- \n\n");
-              printf("Mutex desbloqueado em Santa RENAS\n");
+              printf("Mutex desbloqueado em Santa RENAS %d\n",++cont_mutex);
               sem_post(&mutex);
 
 
@@ -76,11 +78,11 @@ void *Santa(){
     		helpElves();
     		printf("\n \n -----3 ELFOS FINALIZADAS----- \n\n");
         sem_post(&elfAux);
-        printf("Mutex desbloqueado em Santa ELVES\n");
+        printf("Mutex desbloqueado em Santa ELVES %d\n",++cont_mutex);
         sem_post(&mutex);
     	}
       //printf("elves = %d, reindeers = %d\n",elves,reindeer);
-    } while (elves != 0 || reindeer != 0);
+    } while (elves != aux_elves || reindeer != 0);
       /* code */
 
   	//Desbloqueando mutex
@@ -94,6 +96,7 @@ void *Reindeer(){
 
 	printf("\n=====ENTROU Thread Reindeer===== \n\n");
 
+  printf("Mutex bloqueado em Reindeer %d\n",--cont_mutex);
 	sem_wait(&mutex);//Bloqueando essa parte do codigo com mutex
 
 
@@ -106,6 +109,7 @@ void *Reindeer(){
 	}
 
 	//Desbloqueando o mutex
+  printf("Mutex desbloqueado em Reindeer %d\n",++cont_mutex);
   sem_post(&mutex);
 	sem_wait(&reindeerSem);
 	getHitched();
@@ -153,6 +157,7 @@ void *Elves(){
 void *Elves(){
 	printf("=====ENTROU Thread Elves===== \n\n");
 	sem_wait(&elfSem);
+  printf("Mutex bloqueado em Elves %d\n",--cont_mutex);
 	sem_wait(&mutex);
 
 	elves++;
@@ -166,9 +171,11 @@ void *Elves(){
 		sem_post( &elfSem);
 	}
 
-	sem_post(&mutex);
+  printf("Mutex desbloqueado em Elves %d\n",++cont_mutex);
+  sem_post(&mutex);
 	getHelp();
   sem_wait(&elfAux);
+  printf("Mutex bloqueado em Elves %d\n",--cont_mutex);
 	sem_wait(&mutex);
 
 	elves--;
@@ -177,7 +184,7 @@ void *Elves(){
 	if(elves == 0){
 		sem_post(&elfSem);
 	}
-
+  printf("Mutex bloqueado em Elves %d\n",++cont_mutex);
 	sem_post(&mutex);
   pthread_exit(0);
 }
@@ -190,7 +197,7 @@ int main(int argc, char *argv[]){
   }
 
 	if (argc == 2){
-    N_Elves = atoi(argv[1]);
+    aux_elves = N_Elves = atoi(argv[1]);
   } else{
     printf("Forneça apenas o numero de elfos desejados como argumento.\n");
     return 1;
