@@ -5,6 +5,7 @@
 #include <semaphore.h>
 #include <time.h>
 
+
 #define REINDEERS 9
 
 //Declarando variaveis necessarias
@@ -47,36 +48,43 @@ void *Santa(){
   	printf("Mutex bloqueado em Santa\n");
   	sem_wait(&mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
 
-    while (elves > 0) {
+
+
+    do{
     	if(reindeer == REINDEERS){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
     	        prepareSleigh(); // Se as renas forem == 9, o trenó é preparado
+              reindeer = 0;
     	        int i;
     	        for (i=0; i<REINDEERS; i++){
     	        	sem_post(&reindeerSem);
     	        }
-    	        reindeer = 0;
+
               printf("\n \n -----RENAS FINALIZADAS----- \n\n");
+              printf("Mutex desbloqueado em Santa RENAS\n");
               sem_post(&mutex);
+
 
 
     	}
       if (elves == 3){
-  /*
+
     		int j;
     	        for (j=0; j<3; j++){
-    	        	sem_post(&elfSem);
+    	        	sem_post(&elfAux);
     	        }
-  */
+
     		helpElves();
     		printf("\n \n -----3 ELFOS FINALIZADAS----- \n\n");
         sem_post(&elfAux);
+        printf("Mutex desbloqueado em Santa ELVES\n");
         sem_post(&mutex);
     	}
-    }
+      //printf("elves = %d, reindeers = %d\n",elves,reindeer);
+    } while (elves != 0 || reindeer != 0);
+      /* code */
 
-    printf("elvessss: %d\n",elves );
   	//Desbloqueando mutex
-  	printf("Mutex desbloqueado em Santa\n");
+
   	printf("\n =====SAIU Thread Santa===== \n\n");
     pthread_exit(0);
 
@@ -174,10 +182,19 @@ void *Elves(){
   pthread_exit(0);
 }
 
-int main(){
+int main(int argc, char *argv[]){
 
-	printf("elves: \n");
-	scanf("%d", &N_Elves);
+  if (argc == 1) {
+    printf("Forneça o numero de elfos desejados como argumento.\n");
+    return 1;
+  }
+
+	if (argc == 2){
+    N_Elves = atoi(argv[1]);
+  } else{
+    printf("Forneça apenas o numero de elfos desejados como argumento.\n");
+    return 1;
+  }
 
 	//declarando threads
 	pthread_t thr_claus, thr_reindeer, thr_elf;
@@ -195,7 +212,7 @@ int main(){
 
 	pthread_create(&thr_claus, NULL, &Santa, NULL);
   //pthread_create(&thr_reindeer, NULL, &Reindeer, NULL);
-//  pthread_create(&thr_elf, NULL, &Elves, NULL);
+  //pthread_create(&thr_elf, NULL, &Elves, NULL);
 
 
   srand(time(NULL));
@@ -207,8 +224,6 @@ int main(){
   printf("elves_cont: %d\n",elves_cont);
 
   for(int i=0; i < aux_random;i++){
-
-  //do{
     int r = rand()%2;
     printf("i = %d, rein_cont = %d, elves_cont = %d, r = %d\n",i, rein_cont, elves_cont,r);
     if (r == 0){
@@ -232,21 +247,9 @@ int main(){
       pthread_create(&thr_elf, NULL, &Elves, NULL);
       }
     }
-
-  } //while (elves != 0);
-
-/*
-	for(int i=0; i < N_Reindeer;i++){
-		pthread_create(&thr_reindeer[i], NULL, &Reindeer, NULL);
-	}
-
-	for(int j=0; j < N_Elves; j++){
-		pthread_create(&thr_elf[j], NULL, &Elves, NULL);
-	}
-  */
-
-
-	pthread_join(thr_claus, NULL);
-
+  }
+  pthread_join(thr_claus, NULL);
+  printf("FINAL elves = %d, reindeers = %d\n",elves,reindeer);
+  return 0;
 
 }
