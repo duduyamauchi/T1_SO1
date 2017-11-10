@@ -5,20 +5,22 @@
 #include <semaphore.h>
 #include <time.h>
 
-
+//Definindo um numero fixo de renas
 #define REINDEERS 9
 
 //Declarando variaveis necessarias
+//Variavel responsavel pela entrada do programa
 int N_Elves;
-int elves = 0, reindeer = 0; //argReindeer;
+//Contadores
+int elves = 0, reindeer = 0;
 //Declarando semaforos
 sem_t reindeerSem, santaSem, elfMutex;
 //Declarando Mutex
 sem_t mutex,elfSem;
-int cont_mutex = 1;
+//Auxilia na contagem do elfos
 int aux_elves;
 
-
+//Métodos a serem chamados pelas threads
 void prepareSleigh(){
     printf("\n\nSanta is preparing the sleigh... \n\n");
     return;
@@ -37,12 +39,9 @@ void getHelp(){
 }
 
 
-//Funcao Santa
+//Funcao do Papai Noel
 void *Santa(){
-    /* code */
-
-
-    //do{
+    //Loop infinito no qual o papai noel realiza todas as suas funções
 	while(1){
   	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
   	
@@ -51,85 +50,79 @@ void *Santa(){
     	if(reindeer == REINDEERS){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
     			reindeer = 0;
 
-				prepareSleigh();
+				prepareSleigh(); //Prepara o trenó 
 
     	        int i;
     	        for (i=0; i<REINDEERS; i++){
-    	        	sem_post(&reindeerSem);
+    	        	sem_post(&reindeerSem); //Envia o sinal para as 9 renas
     	        }
     	        
 
     	}
-      if (elves == 3){
+      if (elves == 3){ // Caso as renas ainda não estiverem prontas, atender os elfos
 
     		int j;
     	        for (j=0; j<3; j++){
-    	        	sem_post(&elfSem);
+    	        	sem_post(&elfSem); //Mandado o sinal para os 3 elfos
     	        }
-    	    
-    	    	N_Elves = N_Elves - 3;
 		
-				helpElves();
+				helpElves(); //Papai noel ajuda os elfos
     	}
 
-    	sem_post(&mutex);
-	} //while (N_Elves !=0 && reindeer != 0);
-      /* code */
-
-  	//Desbloqueando mutex
-    	pthread_exit(0);
+    	sem_post(&mutex); //Libera o acesso aos contadores
+	} 
+    	pthread_exit(0);//Sai da thread
 
 }
-//Funcao Reindeer
+//Funcao das renas
 void *Reindeer(){
 
-	sem_wait(&mutex);//Bloqueando essa parte do codigo com mutex
+	sem_wait(&mutex);//Acesso exclusivo aos contadores 
 	
-	reindeer++;
-	if(reindeer == REINDEERS){
-		sem_post(&santaSem);
+	reindeer++; //Incrementando o numero de renas
+	if(reindeer == REINDEERS){ //Se o numero de renas for igual a 9, acorde o papai noel
+		sem_post(&santaSem);// Mandando o sinal para o papai noel acordar
 	}
 
-	//Desbloqueando o mutex
-  	sem_post(&mutex);
-	sem_wait(&reindeerSem);
+  	sem_post(&mutex); //Libera o acesso aos contadores
+	sem_wait(&reindeerSem); //Rena espera o sinal do papai noel para ser amarrada ao trenó
 	
-	getHitched();
+	getHitched();//Rena é amarrada ao trenó
 
-  	pthread_exit(0);
+  	pthread_exit(0);//Sai da thread
 }
 
 
-//Funcao Elves
+//Funcao dos elfos
 void *Elves(){
 	
-	sem_wait(&elfMutex);
-	sem_wait(&mutex);
+	sem_wait(&elfMutex); //Bloqueia a criação de novos elfos, não permite a entrada de novos elfos que precisam de ajuda do papai noel
+	sem_wait(&mutex); //Acesso exclusivo aos contadores
 
-	elves++;
+	elves++;//Incrementando o numero de elfos
 
-	if (elves == 3){
-		sem_post(&santaSem);
-	}else{
-		sem_post(&elfMutex);
+	if (elves == 3){ //Se o numero de elfos for igual a 3, acorde o papai noel
+		sem_post(&santaSem);//Mandando sinal para o papai noel acordar
+	}else{ //Caso contrario permitir a entrada de novos elfos, ou seja a criação de mais elfos
+		sem_post(&elfMutex);//Desbloqueia o mutex responsavel por permitir a criação de novos elfos
 	}
 
-  	sem_post(&mutex);
-  	sem_wait(&elfSem);
+  	sem_post(&mutex);//Libera o acesso aos contadores
+  	sem_wait(&elfSem);//Elfo espera o sinal do papai noel o ajudando
 	
-   	getHelp();
+   	getHelp();//Elfo pede ajuda
 
-	sem_wait(&mutex);
+	sem_wait(&mutex); //Acesso exclusivo aos contadores
 
-	elves--;
+	elves--;//Decrementando o numero de elfos que já receberam ajuda
 
-	if(elves == 0){
-		sem_post(&elfMutex);
+	if(elves == 0){ //Quando o numero de elfos pedindo ajudar for 0, libera a entrada de novos elfos pedindo ajuda
+		sem_post(&elfMutex);//Desbloqueia o mutex responsavel por permitir a criação de novos elfos
 	}
 	
-	sem_post(&mutex);
+	sem_post(&mutex);//Libera o acesso aos contadores
   
-	pthread_exit(0);
+	pthread_exit(0);//Sai da thread
 }
 
 int main(int argc, char *argv[]){
