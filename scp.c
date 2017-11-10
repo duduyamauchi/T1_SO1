@@ -46,11 +46,7 @@ void *Santa(){
   	printf("Santa dormindo\n");
   	sem_wait(&santaSem); // Estará dormindo até ser acordado por algum semáforo
   	printf("Santa acordou\n");
-
-  	printf("Mutex bloqueado em Santa %d\n",--cont_mutex);
   	sem_wait(&mutex); // Precisa do acesso exclusivo aos contadores pra ver quem o acordou
-
-
 
     do{
     	if(reindeer == REINDEERS){ // As renas tem prioridade aos elfos, então elas são verificadas primeiro
@@ -60,9 +56,8 @@ void *Santa(){
     	        for (i=0; i<REINDEERS; i++){
     	        	sem_post(&reindeerSem);
     	        }
-
+    	      
               printf("\n \n -----RENAS FINALIZADAS----- \n\n");
-              printf("Mutex desbloqueado em Santa RENAS %d\n",++cont_mutex);
               sem_post(&mutex);
 
 
@@ -74,15 +69,16 @@ void *Santa(){
     	        for (j=0; j<3; j++){
     	        	sem_post(&elfAux);
     	        }
+    	    N_Elves = N_Elves-3;
 
     		helpElves();
+    		sleep(5);
     		printf("\n \n -----3 ELFOS FINALIZADAS----- \n\n");
-        sem_post(&elfAux);
-        printf("Mutex desbloqueado em Santa ELVES %d\n",++cont_mutex);
-        sem_post(&mutex);
+        	sem_post(&elfAux);
+        	sem_post(&mutex);
     	}
       //printf("elves = %d, reindeers = %d\n",elves,reindeer);
-    } while (elves != aux_elves || reindeer != 0);
+    } while (N_Elves !=0 || reindeer != 0);
       /* code */
 
   	//Desbloqueando mutex
@@ -95,28 +91,20 @@ void *Santa(){
 void *Reindeer(){
 
 	printf("\n=====ENTROU Thread Reindeer===== \n\n");
-
-  printf("Mutex bloqueado em Reindeer %d\n",--cont_mutex);
 	sem_wait(&mutex);//Bloqueando essa parte do codigo com mutex
-
 
 	reindeer++;
 	printf("xxxxxxxxxxx NUMEROS DE RENAS: %d xxxxxxxxxxxxxxx\n",reindeer);
 	if(reindeer == REINDEERS){
-		printf("Já há REINDEERS reindeers\n");
 		sem_post(&santaSem);
-		printf("Reindeer acordando papai noel\n");
 	}
 
 	//Desbloqueando o mutex
-  printf("Mutex desbloqueado em Reindeer %d\n",++cont_mutex);
-  sem_post(&mutex);
+  	sem_post(&mutex);
 	sem_wait(&reindeerSem);
+	sleep(5);
 	getHitched();
-  pthread_exit(0);
-
-
-
+  	pthread_exit(0);
 }
 
 /*//Funcao Elves
