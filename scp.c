@@ -127,28 +127,28 @@ void *Elves(){
 
 int main(int argc, char *argv[]){
 
-  if (argc == 1) {
+  if (argc == 1) {// O primeiro argumento de argv é sempre o nome do programa, se tiver só ele tá errado
     printf("Forneça o numero de elfos desejados como argumento.\n");
-    return 1;
+    return 1; //retorna algo diferente de 1, para indicar que o programa nao obteve exito
   }
 
   if (argc == 2){
-    aux_elves = N_Elves = atoi(argv[1]);
+    aux_elves = N_Elves = atoi(argv[1]);//a conversão é forçada para evitar um cast
   } else{
     printf("Forneça apenas o numero de elfos desejados como argumento.\n");
-    return 1;
+    return 1;//retorna algo diferente de 1, para indicar que o programa nao obteve exito
   }
 
   //declarando threads
-  pthread_t thr_claus, thr_reindeer, thr_elf;
+  pthread_t thr_claus, thr_reindeer, thr_elf;//Threads envolvidas no problema
 
   //inicializando semaforos e mutex
-  sem_init(&reindeerSem, 0, 0);
-  sem_init(&elfSem,0,0);
-  sem_init(&santaSem,0,0);
+  sem_init(&reindeerSem, 0, 0);//Semaforo das renas
+  sem_init(&elfSem,0,0);//Semaforo dos elfos
+  sem_init(&santaSem,0,0);// Semaforo do Papai noel
 
-  sem_init(&elfMutex, 0, 1);
-  sem_init(&mutex,0,1);
+  sem_init(&elfMutex, 0, 1); //Mutex que impede a criação de novos elfos
+  sem_init(&mutex,0,1); //Mutex que controla a manipulação das variveis elves e reeinder
 
 
 
@@ -157,34 +157,34 @@ int main(int argc, char *argv[]){
 
   pthread_create(&thr_claus, NULL, &Santa, NULL);
 
-  srand(time(NULL));
-  int aux_random = REINDEERS + N_Elves;
+  srand(time(NULL));//inicia uma seed de numeros aleatórios
+  int aux_random = REINDEERS + N_Elves;// variável para controlar o número de threads de elfos e renas que devem ser criadas
 
-  int elves_cont = N_Elves;
-  int rein_cont = REINDEERS;
+  int elves_cont = N_Elves;//variável para monitorar o numero de elfos que ainda tem que ser gerados;
+  int rein_cont = REINDEERS; // variável para monitorar o numero de duendes que ainda tem que ser gerados
   
   printf("rein_cont: %d\n",rein_cont);
   printf("elves_cont: %d\n",elves_cont);
 
   for(int i=0; i < aux_random;i++){
-    int r = rand()%2;
+    int r = rand()%2;//seletor para escolher entre duendes e renas,
     
-    if (r == 0){
+    if (r == 0){// se r = 0, tenta criar uma thread de duendes
         
-      if (elves_cont > 0){
+      if (elves_cont > 0){// se ainda houver duendes pra serem criados
         elves_cont--;
         pthread_create(&thr_elf, NULL, &Elves, NULL);
-      } else {
+      } else { //se não houver, uma rena deve ser gerada, já que aux_random garante que alguém deve ser criado
         rein_cont--;
         pthread_create(&thr_reindeer, NULL, &Reindeer, NULL);
       }
 
-    }else{
+    }else{// se r = 1, tenta criar uma thread de rena
       
-      if (rein_cont > 0){
+      if (rein_cont > 0){//se  ainda houver renas para serem criadas
         rein_cont--;
         pthread_create(&thr_reindeer, NULL, &Reindeer, NULL);
-      } else {
+      } else {//se não houver, um duende deve ser gerado, já que aux_random garante que alguém deve ser criado
         elves_cont--;
       pthread_create(&thr_elf, NULL, &Elves, NULL);
       }
@@ -192,8 +192,8 @@ int main(int argc, char *argv[]){
     }
   }
   
-  pthread_join(thr_claus, NULL);
+  pthread_join(thr_claus, NULL);//papai noel requer join pois ele tem que esperar as outras threads, já que lida com elas
   
-  return 0;
+  return 0;// retorno bem sucedido
 
 }
